@@ -54,7 +54,7 @@ import io.lettuce.core.protocol.RedisCommand;
  * @author Mikhael Sokolov
  */
 @SuppressWarnings({ "unchecked", "varargs" })
-class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
+public class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     private static final String MUST_NOT_CONTAIN_NULL_ELEMENTS = "must not contain null elements";
 
@@ -66,7 +66,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     private static final byte[] PLUS_BYTES = { '+' };
 
-    RedisCommandBuilder(RedisCodec<K, V> codec) {
+    public RedisCommandBuilder(RedisCodec<K, V> codec) {
         super(codec);
     }
 
@@ -942,7 +942,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(readonly ? EVALSHA_RO : EVALSHA, output, args);
     }
 
-    Command<K, V, Boolean> exists(K key) {
+    public Command<K, V, Boolean> exists(K key) {
         notNullKey(key);
 
         return createCommand(EXISTS, new BooleanOutput<>(codec), key);
@@ -1311,7 +1311,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(GEOSEARCHSTORE, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, V> get(K key) {
+    public Command<K, V, V> get(K key) {
         notNullKey(key);
 
         return createCommand(GET, new ValueOutput<>(codec), key);

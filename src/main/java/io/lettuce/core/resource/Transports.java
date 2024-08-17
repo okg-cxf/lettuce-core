@@ -68,13 +68,15 @@ public class Transports {
 
         return NioDatagramChannel.class;
     }
+
     /**
      * Native transport support.
      */
     public static class NativeTransports {
 
-        static EventLoopResources RESOURCES = KqueueProvider.isAvailable() ? KqueueProvider.getResources()
-                : IOUringProvider.isAvailable() ? IOUringProvider.getResources() : EpollProvider.getResources();
+        static EventLoopResources RESOURCES = KqueueProvider.isAvailable()
+                ? KqueueProvider.getResources()
+                : EpollProvider.getResources();
 
         /**
          * @return {@code true} if a native transport is available.

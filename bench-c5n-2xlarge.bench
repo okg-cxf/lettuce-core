@@ -1,0 +1,37 @@
+[ec2-user@ip-172-31-5-229 lettuce-core]$ ./bench-multi-thread-exists.sh  -t 512 -b 64 -n 10000
+03:54:42,065 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:145) - thread count: 512
+03:54:42,068 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:146) - loop num: 10000
+03:54:42,069 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:147) - batch size: 64
+03:54:42,069 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:154) - =====================================
+03:54:42,069 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:155) - autoBatchFlush: true
+03:55:09,539 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:75) - Total commands: 5,120,000
+03:55:09,539 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:76) - Total time: 26.912654678s
+03:55:09,539 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:77) - Avg latency: 2683.196680078125us
+03:55:09,540 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:78) - Avg QPS: 190245.07471518192/s
+03:55:09,540 INFO  [main] utils.BenchUtils (BenchUtils.java:33) - avg batch count: 63.96481934935785
+03:55:09,564 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:154) - =====================================
+03:55:09,564 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:155) - autoBatchFlush: false
+03:55:43,030 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:75) - Total commands: 5,120,000
+03:55:43,030 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:76) - Total time: 33.436524075s
+03:55:43,030 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:77) - Avg latency: 3330.265472265625us
+03:55:43,030 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:78) - Avg QPS: 153125.96454450686/s
+
+./bench-single-thread-async-exists.sh  -n 5000000 -b 64
+04:07:20,832 INFO  [main] base.AbstractSingleThreadAsync (AbstractSingleThreadAsync.java:206) - loop num: 5000000
+04:07:20,836 INFO  [main] base.AbstractSingleThreadAsync (AbstractSingleThreadAsync.java:207) - batch size: 64
+04:07:20,836 INFO  [main] base.AbstractSingleThreadAsync (AbstractSingleThreadAsync.java:209) - =====================================
+04:07:20,836 INFO  [main] base.AbstractSingleThreadAsync (AbstractSingleThreadAsync.java:210) - autoBatchFlush: true
+04:07:30,882 INFO  [main] base.AbstractSingleThreadAsync (AbstractSingleThreadAsync.java:103) - Total commands: 5,000,000
+04:07:30,883 INFO  [main] base.AbstractSingleThreadAsync (AbstractSingleThreadAsync.java:104) - Total time: 9.525898589s
+04:07:30,883 INFO  [main] base.AbstractSingleThreadAsync (AbstractSingleThreadAsync.java:105) - Avg latency: 0.6459310458866s
+04:07:30,883 INFO  [main] base.AbstractSingleThreadAsync (AbstractSingleThreadAsync.java:106) - Avg QPS: 524884.865536332/s
+04:07:30,884 INFO  [main] utils.BenchUtils (BenchUtils.java:33) - avg batch count: 64.0
+04:07:30,907 INFO  [main] base.AbstractSingleThreadAsync (AbstractSingleThreadAsync.java:209) - =====================================
+04:07:30,907 INFO  [main] base.AbstractSingleThreadAsync (AbstractSingleThreadAsync.java:210) - autoBatchFlush: false
+04:07:45,981 INFO  [main] base.AbstractSingleThreadAsync (AbstractSingleThreadAsync.java:103) - Total commands: 5,000,000
+04:07:45,981 INFO  [main] base.AbstractSingleThreadAsync (AbstractSingleThreadAsync.java:104) - Total time: 15.062137806s
+04:07:45,981 INFO  [main] base.AbstractSingleThreadAsync (AbstractSingleThreadAsync.java:105) - Avg latency: 2.6176325412236s
+04:07:45,981 INFO  [main] base.AbstractSingleThreadAsync (AbstractSingleThreadAsync.java:106) - Avg QPS: 331958.1897603042/s
+04:07:45,981 INFO  [main] utils.BenchUtils (BenchUtils.java:30) - no batch flushed
+04:07:45,991 INFO  [main] base.AbstractSingleThreadAsync (AbstractSingleThreadAsync.java:213) - =====================================
+
