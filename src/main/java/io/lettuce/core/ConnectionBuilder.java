@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import jdk.net.ExtendedSocketOptions;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandEncoder;
 import io.lettuce.core.protocol.CommandHandler;
@@ -51,9 +49,12 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.nio.NioChannelOption;
+import io.netty.handler.flush.FlushConsolidationHandler;
 import io.netty.util.AttributeKey;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import jdk.net.ExtendedSocketOptions;
+import reactor.core.publisher.Mono;
 
 /**
  * Connection builder for connections. This class is part of the internal API.
@@ -126,6 +127,9 @@ public class ConnectionBuilder {
 
         connection.setOptions(clientOptions);
 
+        if (!clientOptions.getAutoBatchFlushOptions().isAutoBatchFlushEnabled()) {
+            handlers.add(new FlushConsolidationHandler(clientOptions.getAutoBatchFlushOptions().getBatchSize(), true));
+        }
         handlers.add(new ChannelGroupListener(channelGroup, clientResources.eventBus()));
         handlers.add(new CommandEncoder());
         handlers.add(getHandshakeHandler());
@@ -401,7 +405,6 @@ public class ConnectionBuilder {
 
         /**
          * Apply Keep-Alive options.
-         *
          */
         public static void applyKeepAlive(Bootstrap bootstrap, int count, Duration idle, Duration interval) {
 
