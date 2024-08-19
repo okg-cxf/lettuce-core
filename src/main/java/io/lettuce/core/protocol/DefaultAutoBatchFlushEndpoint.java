@@ -771,24 +771,6 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         }
     }
 
-    private void onEndpointQuiescence() {
-        if (channel.context.initialState == ConnectionContext.State.ENDPOINT_CLOSED) {
-            return;
-        }
-
-        this.logPrefix = null;
-        // Create happens-before with channelActive()
-        if (!CHANNEL.compareAndSet(this, DummyContextualChannelInstances.CHANNEL_WILL_RECONNECT,
-                DummyContextualChannelInstances.CHANNEL_CONNECTING)) {
-            onUnexpectedState("onEndpointQuiescence", ConnectionContext.State.WILL_RECONNECT);
-            return;
-        }
-
-        // neither connectionWatchdog nor doReconnectOnEndpointQuiescence could be null
-        // noinspection DataFlowIssue
-        connectionWatchdog.reconnectOnAutoBatchFlushEndpointQuiescence();
-    }
-
     private void onWillReconnect(@Nonnull final ConnectionContext.CloseStatus closeStatus,
             final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext) {
         final @Nullable Deque<RedisCommand<?, ?, ?>> retryableFailedToSendTasks = autoBatchFlushEndPointContext
@@ -829,6 +811,25 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
                     it -> it.completeExceptionally(closeStatus.getErr()), closeStatus.getAndClearRetryablePendingCommands(),
                     autoBatchFlushEndPointContext.getAndClearRetryableFailedToSendCommands());
         }
+    }
+
+    private void onEndpointQuiescence() {
+        if (channel.context.initialState == ConnectionContext.State.ENDPOINT_CLOSED) {
+            return;
+        }
+
+        this.logPrefix = null;
+        // Create happens-before with channelActive()
+        if (!CHANNEL.compareAndSet(this, DummyContextualChannelInstances.CHANNEL_WILL_RECONNECT,
+                DummyContextualChannelInstances.CHANNEL_CONNECTING)) {
+            onUnexpectedState("onEndpointQuiescence", ConnectionContext.State.WILL_RECONNECT);
+            return;
+        }
+
+        // notify connectionWatchDog that it is safe to reconnect now.
+        // neither connectionWatchdog nor doReconnectOnEndpointQuiescence could be null
+        // noinspection DataFlowIssue
+        connectionWatchdog.reconnectOnAutoBatchFlushEndpointQuiescence();
     }
 
     private void offerFirstAll(Deque<RedisCommand<?, ?, ?>> commands) {
