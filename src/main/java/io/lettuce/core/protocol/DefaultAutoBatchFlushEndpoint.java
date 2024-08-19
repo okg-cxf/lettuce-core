@@ -87,6 +87,8 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
     private static final Set<Class<? extends Throwable>> SHOULD_NOT_RETRY_EXCEPTION_TYPES = new HashSet<>();
 
+    private static final int HIGH_LOAD_CONCURRENCY_THRESHOLD = 8;
+
     static {
         SHOULD_NOT_RETRY_EXCEPTION_TYPES.add(EncoderException.class);
         SHOULD_NOT_RETRY_EXCEPTION_TYPES.add(Error.class);
@@ -171,6 +173,10 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
     private final int batchSize;
 
+    private final DefaultScheduleStrategy defaultScheduleStrategy;
+
+    private final HighConcurrencyScheduleStrategy highConcurrencyScheduleStrategy;
+
     private final boolean usesMpscQueue;
 
     /**
@@ -202,6 +208,8 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         this.callbackOnClose = callbackOnClose;
         this.writeSpinCount = clientOptions.getAutoBatchFlushOptions().getWriteSpinCount();
         this.batchSize = clientOptions.getAutoBatchFlushOptions().getBatchSize();
+        this.defaultScheduleStrategy = new DefaultScheduleStrategy();
+        this.highConcurrencyScheduleStrategy = new HighConcurrencyScheduleStrategy();
     }
 
     @Override
@@ -251,10 +259,10 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
                 writeAndFlushActivationCommand(chan, command);
             } else {
                 this.taskQueue.offer(command);
-                QUEUE_SIZE.incrementAndGet(this);
+                final int curQueueSize = QUEUE_SIZE.incrementAndGet(this);
 
                 if (autoFlushCommands) {
-                    flushCommands();
+                    flushCommands(chooseScheduleStrategy(curQueueSize));
                 }
             }
         } finally {
@@ -285,10 +293,10 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
                 writeAndFlushActivationCommands(chan, commands);
             } else {
                 this.taskQueue.offer(commands);
-                QUEUE_SIZE.addAndGet(this, commands.size());
+                final int curQueueSize = QUEUE_SIZE.addAndGet(this, commands.size());
 
                 if (autoFlushCommands) {
-                    flushCommands();
+                    flushCommands(chooseScheduleStrategy(curQueueSize / commands.size()));
                 }
             }
         } finally {
@@ -298,6 +306,11 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         }
 
         return (Collection<RedisCommand<K, V, ?>>) commands;
+    }
+
+    private ScheduleStrategy chooseScheduleStrategy(int estimatedConcurrency) {
+        return estimatedConcurrency > HIGH_LOAD_CONCURRENCY_THRESHOLD ? highConcurrencyScheduleStrategy
+                : defaultScheduleStrategy;
     }
 
     private <V, K> void writeAndFlushActivationCommand(ContextualChannel chan, RedisCommand<K, V, ?> command) {
@@ -351,7 +364,8 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
                 inActivation = false;
             }
 
-            scheduleSendJobOnConnected(contextualChannel);
+            // Schedule directly
+            defaultScheduleStrategy.schedule(contextualChannel);
         } catch (Exception e) {
 
             if (debugEnabled) {
@@ -469,6 +483,10 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
     @Override
     public void flushCommands() {
+        flushCommands(defaultScheduleStrategy);
+    }
+
+    private void flushCommands(ScheduleStrategy scheduleStrategy) {
         final ContextualChannel chan = this.channel;
         switch (chan.context.initialState) {
             case ENDPOINT_CLOSED:
@@ -488,7 +506,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
                 // command will be handled later either in notifyReconnectFailed or in notifyChannelActive
                 return;
             case CONNECTED:
-                scheduleSendJobIfNeeded(chan);
+                scheduleStrategy.schedule(chan);
                 return;
             default:
                 throw new IllegalStateException("unexpected state: " + chan.context.initialState);
@@ -632,80 +650,6 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
     @Override
     public String getId() {
         return cachedEndpointId;
-    }
-
-    private void scheduleSendJobOnConnected(final ContextualChannel chan) {
-        LettuceAssert.assertState(chan.eventLoop().inEventLoop(), "must be called in event loop thread");
-
-        // Schedule directly
-        loopSend(chan, false);
-    }
-
-    private void scheduleSendJobIfNeeded(final ContextualChannel chan) {
-        final EventLoop eventLoop = chan.eventLoop();
-        if (eventLoop.inEventLoop()) {
-            // Possible in reactive() mode.
-            loopSend(chan, false);
-            return;
-        }
-
-        if (chan.context.autoBatchFlushEndPointContext.hasOngoingSendLoop.tryEnter()) {
-            // Benchmark result of using tryEnterSafeGetVolatile() or not (1 thread, async get):
-            // 1. uses tryEnterSafeGetVolatile() to avoid unnecessary eventLoop.execute() calls
-            // Avg latency: 3.2956217278663s
-            // Avg QPS: 495238.50056392356/s
-            // 2. uses eventLoop.execute() directly
-            // Avg latency: 3.2677197021496998s
-            // Avg QPS: 476925.0751855796/s
-            eventLoop.execute(() -> loopSend(chan, true));
-        }
-
-        // Otherwise:
-        // 1. offer() (volatile write of producerIndex) synchronizes-before hasOngoingSendLoop.safe.get() == 1 (volatile read)
-        // 2. hasOngoingSendLoop.safe.get() == 1 (volatile read) synchronizes-before
-        // hasOngoingSendLoop.safe.set(0) (volatile write) in first loopSend0()
-        // 3. hasOngoingSendLoop.safe.set(0) (volatile write) synchronizes-before
-        // taskQueue.isEmpty() (volatile read of producerIndex), which guarantees to see the offered task.
-    }
-
-    private void loopSend(final ContextualChannel chan, boolean entered) {
-        final ConnectionContext connectionContext = chan.context;
-        final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext = connectionContext.autoBatchFlushEndPointContext;
-        if (connectionContext.isChannelInactiveEventFired()
-                || autoBatchFlushEndPointContext.hasRetryableFailedToSendCommands()) {
-            return;
-        }
-
-        LettuceAssert.assertState(channel == chan, "unexpected: channel not match but closeStatus == null");
-        loopSend0(autoBatchFlushEndPointContext, chan, writeSpinCount, entered);
-    }
-
-    private void loopSend0(final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext, final ContextualChannel chan,
-            int remainingSpinnCount, boolean entered) {
-        do {
-            final int count = pollBatch(autoBatchFlushEndPointContext, chan);
-            if (count < 0) {
-                return;
-            }
-            if (count < batchSize) {
-                if (!entered) {
-                    return;
-                }
-                // queue was empty
-                // The send loop will be triggered later when a new task is added,
-                // // Don't setUnsafe here because loopSend0() may result in a delayed loopSend() call.
-                autoBatchFlushEndPointContext.hasOngoingSendLoop.exit();
-                if (taskQueue.isEmpty()) {
-                    return;
-                }
-                entered = false;
-                // // Guarantee thread-safety: no dangling tasks in the queue.
-            }
-        } while (--remainingSpinnCount > 0);
-
-        final boolean finalEntered = entered;
-        // Don't need to exitUnsafe since we still have an ongoing consume tasks in this thread.
-        chan.eventLoop().execute(() -> loopSend(chan, finalEntered));
     }
 
     private int pollBatch(final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext, ContextualChannel chan) {
@@ -1167,6 +1111,126 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
             this.isActivationCommand = false;
 
             handle.recycle(this);
+        }
+
+    }
+
+    interface ScheduleStrategy {
+
+        void schedule(ContextualChannel chan);
+
+    }
+
+    class DefaultScheduleStrategy implements ScheduleStrategy {
+
+        @Override
+        public void schedule(ContextualChannel chan) {
+            final EventLoop eventLoop = chan.eventLoop();
+            if (eventLoop.inEventLoop()) {
+                // Possible in reactive() mode.
+                loopSend(chan);
+                return;
+            }
+
+            eventLoop.execute(() -> loopSend(chan));
+        }
+
+        private void loopSend(final ContextualChannel chan) {
+            final ConnectionContext connectionContext = chan.context;
+            final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext = connectionContext.autoBatchFlushEndPointContext;
+            if (connectionContext.isChannelInactiveEventFired()
+                    || autoBatchFlushEndPointContext.hasRetryableFailedToSendCommands()) {
+                return;
+            }
+
+            LettuceAssert.assertState(channel == chan, "unexpected: channel not match but closeStatus == null");
+            loopSend0(autoBatchFlushEndPointContext, chan, writeSpinCount);
+        }
+
+        private void loopSend0(final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext, final ContextualChannel chan,
+                int remainingSpinnCount) {
+            do {
+                final int count = DefaultAutoBatchFlushEndpoint.this.pollBatch(autoBatchFlushEndPointContext, chan);
+                if (count < batchSize) {
+                    return;
+                }
+            } while (--remainingSpinnCount > 0);
+
+            // Don't need to exitUnsafe since we still have an ongoing consume tasks in this thread.
+            chan.eventLoop().execute(() -> loopSend(chan));
+        }
+
+    }
+
+    class HighConcurrencyScheduleStrategy implements ScheduleStrategy {
+
+        @Override
+        public void schedule(ContextualChannel chan) {
+            final EventLoop eventLoop = chan.eventLoop();
+            if (eventLoop.inEventLoop()) {
+                // Possible in reactive() mode.
+                loopSend(chan, false);
+                return;
+            }
+
+            if (chan.context.autoBatchFlushEndPointContext.hasOngoingSendLoop.tryEnter()) {
+                // Benchmark result of using tryEnterSafeGetVolatile() or not (1 thread, async get):
+                // 1. uses tryEnterSafeGetVolatile() to avoid unnecessary eventLoop.execute() calls
+                // Avg latency: 3.2956217278663s
+                // Avg QPS: 495238.50056392356/s
+                // 2. uses eventLoop.execute() directly
+                // Avg latency: 3.2677197021496998s
+                // Avg QPS: 476925.0751855796/s
+                eventLoop.execute(() -> loopSend(chan, true));
+            }
+
+            // Otherwise:
+            // 1. offer() (volatile write of producerIndex) synchronizes-before hasOngoingSendLoop.safe.get() == 1 (volatile
+            // read)
+            // 2. hasOngoingSendLoop.safe.get() == 1 (volatile read) synchronizes-before
+            // hasOngoingSendLoop.safe.set(0) (volatile write) in first loopSend0()
+            // 3. hasOngoingSendLoop.safe.set(0) (volatile write) synchronizes-before
+            // taskQueue.isEmpty() (volatile read of producerIndex), which guarantees to see the offered task.
+        }
+
+        private void loopSend(final ContextualChannel chan, boolean entered) {
+            final ConnectionContext connectionContext = chan.context;
+            final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext = connectionContext.autoBatchFlushEndPointContext;
+            if (connectionContext.isChannelInactiveEventFired()
+                    || autoBatchFlushEndPointContext.hasRetryableFailedToSendCommands()) {
+                return;
+            }
+
+            LettuceAssert.assertState(channel == chan, "unexpected: channel not match but closeStatus == null");
+            loopSend0(autoBatchFlushEndPointContext, chan, writeSpinCount, entered);
+        }
+
+        private void loopSend0(final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext, final ContextualChannel chan,
+                int remainingSpinnCount, boolean entered) {
+            do {
+                final int count = DefaultAutoBatchFlushEndpoint.this.pollBatch(autoBatchFlushEndPointContext, chan);
+                if (count < 0) {
+                    return;
+                }
+                if (count < batchSize) {
+                    if (!entered) {
+                        return;
+                    }
+                    // queue was empty
+                    // The send loop will be triggered later when a new task is added,
+                    // // Don't setUnsafe here because loopSend0() may result in a delayed loopSend() call.
+                    autoBatchFlushEndPointContext.hasOngoingSendLoop.exit();
+                    if (taskQueue.isEmpty()) {
+                        return;
+                    }
+                    entered = false;
+                    // // Guarantee thread-safety: no dangling tasks in the queue.
+                }
+            } while (--remainingSpinnCount > 0);
+
+            final boolean finalEntered = entered;
+            // Don't need to exitUnsafe since we still have an ongoing consume tasks in this thread.
+            chan.eventLoop().execute(() -> loopSend(chan, finalEntered));
         }
 
     }
