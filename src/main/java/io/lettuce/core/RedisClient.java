@@ -276,7 +276,7 @@ public class RedisClient extends AbstractRedisClient {
 
         logger.debug("Trying to get a Redis connection for: {}", redisURI);
 
-        Endpoint endpoint = getOptions().getAutoBatchFlushOptions().isAutoBatchFlushEnabled()
+        Endpoint endpoint = getOptions().getAutoBatchFlushOptions().isAutoBatchFlushEnabledWithoutConsolidateFlush()
                 ? new DefaultAutoBatchFlushEndpoint(getOptions(), getResources())
                 : new DefaultEndpoint(getOptions(), getResources());
         RedisChannelWriter writer = (RedisChannelWriter) endpoint;

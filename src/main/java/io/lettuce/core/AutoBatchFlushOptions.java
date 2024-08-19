@@ -28,6 +28,10 @@ public class AutoBatchFlushOptions implements Serializable {
 
     public static final boolean DEFAULT_USE_MPSC_QUEUE = true;
 
+    public static final boolean DEFAULT_USE_CONSOLIDATE = false;
+
+    public static final boolean DEFAULT_CONSOLIDATE_WHEN_NO_READ_IN_PROGRESS = true;
+
     private final boolean enableAutoBatchFlush;
 
     private final int writeSpinCount;
@@ -36,11 +40,17 @@ public class AutoBatchFlushOptions implements Serializable {
 
     private final boolean useMpscQueue;
 
+    private final boolean useConsolidateFlush;
+
+    private final boolean consolidateFlushWhenNoReadInProgress;
+
     public AutoBatchFlushOptions(AutoBatchFlushOptions.Builder builder) {
         this.enableAutoBatchFlush = builder.enableAutoBatchFlush;
         this.writeSpinCount = builder.writeSpinCount;
         this.batchSize = builder.batchSize;
         this.useMpscQueue = builder.useMpscQueue;
+        this.useConsolidateFlush = builder.useConsolidateFlush;
+        this.consolidateFlushWhenNoReadInProgress = builder.consolidateFlushWhenNoReadInProgress;
     }
 
     /**
@@ -69,6 +79,10 @@ public class AutoBatchFlushOptions implements Serializable {
         private int batchSize = DEFAULT_BATCH_SIZE;
 
         private boolean useMpscQueue = DEFAULT_USE_MPSC_QUEUE;
+
+        private boolean useConsolidateFlush = DEFAULT_USE_CONSOLIDATE;
+
+        private boolean consolidateFlushWhenNoReadInProgress = DEFAULT_CONSOLIDATE_WHEN_NO_READ_IN_PROGRESS;
 
         /**
          * Enable auto batch flush.
@@ -119,6 +133,26 @@ public class AutoBatchFlushOptions implements Serializable {
         }
 
         /**
+         * @param useConsolidate use FlushConsolidationHandler to do the batching instead of using DefaultAutoBatchFlushEndpoint
+         * @return {@code this}
+         * @see io.netty.handler.flush.FlushConsolidationHandler
+         */
+        public Builder useConsolidateFlush(boolean useConsolidate) {
+            this.useConsolidateFlush = useConsolidate;
+            return this;
+        }
+
+        /**
+         * @param consolidateFlushWhenNoReadInProgress whether to consolidate when no read in progress
+         * @return {@code this}
+         * @see io.netty.handler.flush.FlushConsolidationHandler#FlushConsolidationHandler(int, boolean)
+         */
+        public Builder consolidateFlushWhenNoReadInProgress(boolean consolidateFlushWhenNoReadInProgress) {
+            this.consolidateFlushWhenNoReadInProgress = consolidateFlushWhenNoReadInProgress;
+            return this;
+        }
+
+        /**
          * Create a new instance of {@link AutoBatchFlushOptions}.
          *
          * @return new instance of {@link AutoBatchFlushOptions}
@@ -127,13 +161,6 @@ public class AutoBatchFlushOptions implements Serializable {
             return new AutoBatchFlushOptions(this);
         }
 
-    }
-
-    /**
-     * @return {@code true} if auto batch flush is enabled.
-     */
-    public boolean isAutoBatchFlushEnabled() {
-        return enableAutoBatchFlush;
     }
 
     /**
@@ -155,6 +182,27 @@ public class AutoBatchFlushOptions implements Serializable {
      */
     public boolean usesMpscQueue() {
         return useMpscQueue;
+    }
+
+    /**
+     * @return {@code true} if auto batch flush is enabled && not using consolidate flush
+     */
+    public boolean isAutoBatchFlushEnabledWithoutConsolidateFlush() {
+        return enableAutoBatchFlush && !useConsolidateFlush;
+    }
+
+    /**
+     * @return {@code true} if auto batch flush is enabled && using consolidate flush
+     */
+    public boolean isAutoBatchFlushEnabledWithConsolidateFlush() {
+        return enableAutoBatchFlush && useConsolidateFlush;
+    }
+
+    /**
+     * @return {@code true} if consolidate flush is enabled even if no read in progress
+     */
+    public boolean consolidateFlushWhenNoReadInProgress() {
+        return consolidateFlushWhenNoReadInProgress;
     }
 
 }
