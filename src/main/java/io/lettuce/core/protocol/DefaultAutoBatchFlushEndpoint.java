@@ -1266,25 +1266,23 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
                 cur = this.owner;
                 if (isOwnerCurrentThreadAndPreemptPrevented(cur)) {
                     // already prevented preemption, safe to skip expensive add/done calls
-                    executeInOwnerWithPreemptPrevention(task, false);
+                    task.run();
                     return;
                 }
             } while (!OWNER.compareAndSet(this, cur, cur.toAdd(1)));
 
             if (cur.isCurrentThread()) {
-                executeInOwnerWithPreemptPrevention(task, true);
+                executeInOwnerWithPreemptPrevention(task);
             } else {
-                cur.thread.execute(() -> executeInOwnerWithPreemptPrevention(task, true));
+                cur.thread.execute(() -> executeInOwnerWithPreemptPrevention(task));
             }
         }
 
-        private void executeInOwnerWithPreemptPrevention(Runnable task, boolean added) {
+        private void executeInOwnerWithPreemptPrevention(Runnable task) {
             try {
                 task.run();
             } finally {
-                if (added) {
-                    done(1);
-                }
+                done(1);
             }
         }
 
