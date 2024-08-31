@@ -554,9 +554,10 @@ public class RedisClusterClient extends AbstractRedisClient {
         assertNotEmpty(initialUris);
         LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
 
-        Endpoint endpoint = getClusterClientOptions().getAutoBatchFlushOptions().isAutoBatchFlushEnabled()
-                ? new ClusterNodeAutoBatchFlushEndpoint(getClusterClientOptions(), getResources(), clusterWriter)
-                : new ClusterNodeEndpoint(getClusterClientOptions(), getResources(), clusterWriter);
+        Endpoint endpoint = getClusterClientOptions().getAutoBatchFlushOptions()
+                .isAutoBatchFlushEnabledWithoutConsolidateFlush()
+                        ? new ClusterNodeAutoBatchFlushEndpoint(getClusterClientOptions(), getResources(), clusterWriter)
+                        : new ClusterNodeEndpoint(getClusterClientOptions(), getResources(), clusterWriter);
 
         RedisChannelWriter writer = (RedisChannelWriter) endpoint;
 

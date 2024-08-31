@@ -88,6 +88,10 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
     private static final Set<Class<? extends Throwable>> SHOULD_NOT_RETRY_EXCEPTION_TYPES = new HashSet<>();
 
+    public static final AtomicLong FLUSHED_BATCH_COUNT = new AtomicLong();
+
+    public static final AtomicLong FLUSHED_COMMAND_COUNT = new AtomicLong();
+
     static {
         SHOULD_NOT_RETRY_EXCEPTION_TYPES.add(EncoderException.class);
         SHOULD_NOT_RETRY_EXCEPTION_TYPES.add(Error.class);
@@ -316,6 +320,8 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
     @Override
     public void notifyChannelActive(Channel channel) {
+        Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+
         final ContextualChannel contextualChannel = new ContextualChannel(channel, ConnectionContext.State.CONNECTED);
         if (!CHANNEL.compareAndSet(this, DummyContextualChannelInstances.CHANNEL_CONNECTING, contextualChannel)) {
             channel.close();
@@ -737,6 +743,9 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         }
 
         if (count > 0) {
+            FLUSHED_BATCH_COUNT.incrementAndGet();
+            FLUSHED_COMMAND_COUNT.addAndGet(count);
+
             channelFlush(chan);
             if (autoBatchFlushEndPointContext.hasRetryableFailedToSendCommands()) {
                 // Wait for onConnectionClose event()

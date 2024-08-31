@@ -3,6 +3,7 @@ package io.lettuce.core.context;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -21,6 +22,12 @@ public class AutoBatchFlushEndPointContext {
 
     public static class HasOngoingSendLoop {
 
+        public static final AtomicLong ENTERED_FREQUENCY = new AtomicLong();
+
+        public static final AtomicLong ENTER_FAILED_FREQUENCY = new AtomicLong();
+
+        public static boolean countEnterRatio = false;
+
         /**
          * Used in multi-threaded environment, can be used to synchronize between threads.
          */
@@ -36,7 +43,17 @@ public class AutoBatchFlushEndPointContext {
          * @return true if entered the loop, false if already have a running loop.
          */
         public boolean tryEnter() {
-            return safe.get() == 0 && /* rare case if QPS is high */ safe.compareAndSet(0, 1);
+            if (safe.get() == 0) {
+                if (countEnterRatio) {
+                    ENTERED_FREQUENCY.incrementAndGet();
+                }
+                // rare case if QPS is high */
+                return safe.compareAndSet(0, 1);
+            }
+            if (countEnterRatio) {
+                ENTER_FAILED_FREQUENCY.incrementAndGet();
+            }
+            return false;
         }
 
         public void exit() {

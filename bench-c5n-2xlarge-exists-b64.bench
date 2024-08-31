@@ -1,0 +1,157 @@
+Test Env:
+    Redis:
+        engine: 7.1.0
+        server: AWS elasticcache cache.r7g.large
+    Client: EC2-c5n.2xlarge
+
+./bench-multi-thread-exists.sh  -b 64 -s 10  -n 60000 -t 64; echo "--------------"; ./bench-multi-thread-exists.sh  -b 64 -s 10  -n 10000 -t 512; echo "--------------";
+
+1 thread:
+./bench-multi-thread-exists.sh  -b 64 -s 10  -n 100000 -t 1;
+13:25:40,669 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:205) - thread count: 1
+13:25:40,672 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:206) - loop num: 100000
+13:25:40,672 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:207) - batch size: 64
+13:25:40,673 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:208) - write spin count: 10
+13:25:40,673 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:209) - use ssl: false
+13:25:40,674 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:221) - =====================================
+13:25:40,674 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:222) - useAutoBatch: true, useConsolidateFlush: false, consolidateFlushWhenNoReadInProgress: false
+13:26:12,877 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:91) - Total commands: 100,000
+13:26:12,877 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:92) - Total time: 15.590932707s
+13:26:12,878 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:93) - Avg latency: 0.15346759000000001ms
+13:26:12,878 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:94) - Avg QPS: 6413.9844536114315/s
+13:26:12,878 INFO  [main] utils.BenchUtils (BenchUtils.java:33) - avg batch count: 1.0
+13:26:12,882 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:221) - =====================================
+13:26:12,882 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:222) - useAutoBatch: true, useConsolidateFlush: true, consolidateFlushWhenNoReadInProgress: true
+13:26:44,610 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:91) - Total commands: 100,000
+13:26:44,610 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:92) - Total time: 15.804717372s
+13:26:44,611 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:93) - Avg latency: 0.15571580000000002ms
+13:26:44,611 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:94) - Avg QPS: 6327.224818152224/s
+13:26:44,611 INFO  [main] utils.BenchUtils (BenchUtils.java:30) - no batch flushed
+13:26:44,614 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:221) - =====================================
+13:26:44,614 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:222) - useAutoBatch: true, useConsolidateFlush: true, consolidateFlushWhenNoReadInProgress: false
+13:27:15,981 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:91) - Total commands: 100,000
+13:27:15,981 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:92) - Total time: 15.558629416s
+13:27:15,981 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:93) - Avg latency: 0.15332235ms
+13:27:15,981 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:94) - Avg QPS: 6427.301359666242/s
+13:27:15,982 INFO  [main] utils.BenchUtils (BenchUtils.java:30) - no batch flushed
+13:27:15,984 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:221) - =====================================
+13:27:15,984 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:222) - useAutoBatch: false, useConsolidateFlush: false, consolidateFlushWhenNoReadInProgress: false
+13:27:47,308 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:91) - Total commands: 100,000
+13:27:47,308 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:92) - Total time: 15.655542896s
+13:27:47,308 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:93) - Avg latency: 0.15430636ms
+13:27:47,308 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:94) - Avg QPS: 6387.514036677071/s
+13:27:47,308 INFO  [main] utils.BenchUtils (BenchUtils.java:30) - no batch flushed
+13:27:47,312 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:227) - =====================================
+
+8 threads:
+./bench-multi-thread-exists.sh  -b 64 -s 10  -n 100000 -t 8
+13:27:48,865 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:205) - thread count: 8
+13:27:48,869 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:206) - loop num: 100000
+13:27:48,869 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:207) - batch size: 64
+13:27:48,869 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:208) - write spin count: 10
+13:27:48,870 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:209) - use ssl: false
+13:27:48,870 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:221) - =====================================
+13:27:48,871 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:222) - useAutoBatch: true, useConsolidateFlush: false, consolidateFlushWhenNoReadInProgress: false
+13:28:27,085 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:91) - Total commands: 800,000
+13:28:27,085 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:92) - Total time: 18.251603376s
+13:28:27,086 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:93) - Avg latency: 0.17947709374999998ms
+13:28:27,086 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:94) - Avg QPS: 43831.76554515547/s
+13:28:27,086 INFO  [main] utils.BenchUtils (BenchUtils.java:33) - avg batch count: 1.6434326377504693
+13:28:27,090 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:221) - =====================================
+13:28:27,090 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:222) - useAutoBatch: true, useConsolidateFlush: true, consolidateFlushWhenNoReadInProgress: true
+13:29:04,385 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:91) - Total commands: 800,000
+13:29:04,385 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:92) - Total time: 18.479567474s
+13:29:04,385 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:93) - Avg latency: 0.1818802975ms
+13:29:04,385 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:94) - Avg QPS: 43291.05652096931/s
+13:29:04,385 INFO  [main] utils.BenchUtils (BenchUtils.java:30) - no batch flushed
+13:29:04,389 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:221) - =====================================
+13:29:04,389 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:222) - useAutoBatch: true, useConsolidateFlush: true, consolidateFlushWhenNoReadInProgress: false
+13:29:42,147 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:91) - Total commands: 800,000
+13:29:42,147 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:92) - Total time: 18.752815952s
+13:29:42,147 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:93) - Avg latency: 0.18451409125ms
+13:29:42,147 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:94) - Avg QPS: 42660.259773662394/s
+13:29:42,147 INFO  [main] utils.BenchUtils (BenchUtils.java:30) - no batch flushed
+13:29:42,150 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:221) - =====================================
+13:29:42,150 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:222) - useAutoBatch: false, useConsolidateFlush: false, consolidateFlushWhenNoReadInProgress: false
+13:30:20,035 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:91) - Total commands: 800,000
+13:30:20,035 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:92) - Total time: 18.986750141s
+13:30:20,035 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:93) - Avg latency: 0.18694652375ms
+13:30:20,035 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:94) - Avg QPS: 42134.64621691521/s
+13:30:20,035 INFO  [main] utils.BenchUtils (BenchUtils.java:30) - no batch flushed
+13:30:20,038 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:227) - =====================================
+
+64 threads:
+./bench-multi-thread-exists.sh  -b 64 -s 10  -n 60000 -t 64
+13:30:21,571 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:205) - thread count: 64
+13:30:21,574 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:206) - loop num: 60000
+13:30:21,574 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:207) - batch size: 64
+13:30:21,575 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:208) - write spin count: 10
+13:30:21,575 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:209) - use ssl: false
+13:30:21,576 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:221) - =====================================
+13:30:21,576 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:222) - useAutoBatch: true, useConsolidateFlush: false, consolidateFlushWhenNoReadInProgress: false
+13:31:20,176 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:91) - Total commands: 3,840,000
+13:31:20,176 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:92) - Total time: 28.960569396s
+13:31:20,176 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:93) - Avg latency: 0.47958698906249997ms
+13:31:20,177 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:94) - Avg QPS: 132594.07808916824/s
+13:31:20,177 INFO  [main] utils.BenchUtils (BenchUtils.java:33) - avg batch count: 63.89989017206376
+13:31:20,182 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:221) - =====================================
+13:31:20,182 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:222) - useAutoBatch: true, useConsolidateFlush: true, consolidateFlushWhenNoReadInProgress: true
+13:32:16,841 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:91) - Total commands: 3,840,000
+13:32:16,841 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:92) - Total time: 28.172734435s
+13:32:16,841 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:93) - Avg latency: 0.46662609479166667ms
+13:32:16,842 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:94) - Avg QPS: 136301.9982621719/s
+13:32:16,842 INFO  [main] utils.BenchUtils (BenchUtils.java:30) - no batch flushed
+13:32:16,846 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:221) - =====================================
+13:32:16,846 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:222) - useAutoBatch: true, useConsolidateFlush: true, consolidateFlushWhenNoReadInProgress: false
+13:33:07,244 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:91) - Total commands: 3,840,000
+13:33:07,245 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:92) - Total time: 25.578903716s
+13:33:07,245 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:93) - Avg latency: 0.42346141666666665ms
+13:33:07,245 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:94) - Avg QPS: 150123.71298766884/s
+13:33:07,245 INFO  [main] utils.BenchUtils (BenchUtils.java:30) - no batch flushed
+13:33:07,249 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:221) - =====================================
+13:33:07,249 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:222) - useAutoBatch: false, useConsolidateFlush: false, consolidateFlushWhenNoReadInProgress: false
+13:33:59,005 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:91) - Total commands: 3,840,000
+13:33:59,006 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:92) - Total time: 25.614627731s
+13:33:59,006 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:93) - Avg latency: 0.4240685182291667ms
+13:33:59,006 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:94) - Avg QPS: 149914.3395846685/s
+13:33:59,006 INFO  [main] utils.BenchUtils (BenchUtils.java:30) - no batch flushed
+13:33:59,009 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:227) - =====================================
+
+
+512 threads:
+./bench-multi-thread-exists.sh  -b 64 -s 10  -n 10000 -t 512
+13:42:47,237 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:205) - thread count: 512
+13:42:47,240 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:206) - loop num: 10000
+13:42:47,240 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:207) - batch size: 64
+13:42:47,241 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:208) - write spin count: 10
+13:42:47,241 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:209) - use ssl: false
+13:42:47,242 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:221) - =====================================
+13:42:47,242 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:222) - useAutoBatch: true, useConsolidateFlush: false, consolidateFlushWhenNoReadInProgress: false
+13:43:40,343 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:91) - Total commands: 5,120,000
+13:43:40,344 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:92) - Total time: 26.23610764s
+13:43:40,344 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:93) - Avg latency: 2.61233833984375ms
+13:43:40,344 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:94) - Avg QPS: 195150.89929704223/s
+13:43:40,345 INFO  [main] utils.BenchUtils (BenchUtils.java:33) - avg batch count: 63.776781265570506
+13:43:40,349 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:221) - =====================================
+13:43:40,349 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:222) - useAutoBatch: true, useConsolidateFlush: true, consolidateFlushWhenNoReadInProgress: true
+13:44:35,779 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:91) - Total commands: 5,120,000
+13:44:35,780 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:92) - Total time: 27.702922157s
+13:44:35,780 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:93) - Avg latency: 2.76253435703125ms
+13:44:35,780 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:94) - Avg QPS: 184818.0481099996/s
+13:44:35,780 INFO  [main] utils.BenchUtils (BenchUtils.java:30) - no batch flushed
+13:44:35,784 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:221) - =====================================
+13:44:35,784 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:222) - useAutoBatch: true, useConsolidateFlush: true, consolidateFlushWhenNoReadInProgress: false
+13:45:39,202 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:91) - Total commands: 5,120,000
+13:45:39,202 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:92) - Total time: 31.755502641s
+13:45:39,202 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:93) - Avg latency: 3.16780918984375ms
+13:45:39,203 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:94) - Avg QPS: 161231.89917294812/s
+13:45:39,203 INFO  [main] utils.BenchUtils (BenchUtils.java:30) - no batch flushed
+13:45:39,207 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:221) - =====================================
+13:45:39,207 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:222) - useAutoBatch: false, useConsolidateFlush: false, consolidateFlushWhenNoReadInProgress: false
+13:46:42,286 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:91) - Total commands: 5,120,000
+13:46:42,286 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:92) - Total time: 31.767367901s
+13:46:42,286 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:93) - Avg latency: 3.169012224609375ms
+13:46:42,286 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:94) - Avg QPS: 161171.67830699717/s
+13:46:42,287 INFO  [main] utils.BenchUtils (BenchUtils.java:30) - no batch flushed
+13:46:42,290 INFO  [main] base.AbstractMultiThreadSync (AbstractMultiThreadSync.java:227) - =====================================
+

@@ -19,8 +19,6 @@
  */
 package io.lettuce.core.protocol;
 
-import static io.lettuce.core.protocol.CommandHandler.*;
-
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
@@ -55,6 +53,8 @@ import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+
+import static io.lettuce.core.protocol.CommandHandler.SUPPRESS_IO_EXCEPTION_MESSAGES;
 
 /**
  * Default {@link Endpoint} implementation.
@@ -439,6 +439,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
     @Override
     public void notifyChannelActive(Channel channel) {
+        Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 
         this.logPrefix = null;
         this.channel = channel;
